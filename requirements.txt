@@ -1,0 +1,9 @@
+# Requirements:
+
+matplotlib
+numpy
+pytorch-lightning
+scikit-learn
+scipy
+torch
+torchmetrics
