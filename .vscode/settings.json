@@ -1,0 +1,5 @@
+{
+    "python.formatting.provider": "black",
+    "editor.formatOnSaveMode": "modificationsIfAvailable",
+    "editor.formatOnSave": true
+}
