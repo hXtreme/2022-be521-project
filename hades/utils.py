@@ -29,10 +29,15 @@ def dump_data(path, *dg):
     :param dg: The data to dump.
     """
     temp = np.array([None] * len(dg), dtype=object)
-    temp.shape = ((len(dg), 1))
+    temp.shape = (len(dg), 1)
     for i, d in enumerate(dg):
         temp[i, 0] = d
     leaderboard_data = {
         "predicted_dg": temp,
     }
     savemat(path, leaderboard_data)
+
+
+def get_time_slice(start, duartion, fs):
+    time_slice = np.arange(0, int(duartion * fs)) + int(start * fs)
+    return time_slice
