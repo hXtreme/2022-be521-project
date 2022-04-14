@@ -1,13 +1,15 @@
 from abc import abstractmethod
 import numpy as np
 
+from tqdm import tqdm, trange
+
 import hades
+from hades import preprocessors
 
 
 class Pipeline:
-    def __init__(self, name, data_dir):
+    def __init__(self, name):
         self.name = name
-        self.data_dir = data_dir
 
     def pre_process_X(self, X: np.ndarray, *args, **kwds):
         return X
@@ -21,32 +23,56 @@ class Pipeline:
     def post_process_Y(self, _X: np.ndarray, _Y: np.ndarray, *args, **kwds):
         return _Y
 
-    @abstractmethod
     def fit(self, X: np.ndarray, Y: np.ndarray):
+        X = self.pre_process_X(X)
+        Y = self.pre_process_Y(Y)
+        return self._fit(X, Y)
+
+    @abstractmethod
+    def _fit(self, X: np.ndarray, Y: np.ndarray):
         return self
 
-    @abstractmethod
     def predict(self, X: np.ndarray) -> np.ndarray:
+        _X = self.pre_process_eval_X(X)
+        _Y = self._predict(_X)
+        Y = self.post_process_Y(_X, _Y)
+        assert len(Y) == len(
+            X
+        ), f"Predicted data length ({len(Y)}) does not match test data length ({len(X)})"
+        return Y
+
+    @abstractmethod
+    def _predict(self, X: np.ndarray) -> np.ndarray:
         pass
 
-    def __call__(self, subject_id, *args, **kwds) -> np.ndarray:
-        train_data, train_label, test_data = hades.utils.load_data(
-            self.data_dir, subject_id
-        )
-
-        X_train = self.pre_process_X(train_data, *args, **kwds)
-        Y_train = self.pre_process_Y(train_label, *args, **kwds)
-        self.fit(X_train, Y_train)
-        X_test = self.pre_process_eval_X(test_data, *args, **kwds)
-        _Y_test = self.predict(X_test)
-        Y_test = self.post_process_Y(X_test, _Y_test, *args, **kwds)
-        assert len(Y_test) == len(
-            test_data
-        ), f"Predicted data length ({len(Y_test)}) does not match test data length ({len(test_data)})"
+    def __call__(self, train_data, train_label, test_data, *args, **kwds) -> np.ndarray:
+        self.fit(train_data, train_label)
+        Y_test = self.predict(test_data)
         return Y_test
 
 
-def run_pipeline(pipeline, save_dir, *args, **kwds):
-    result = [pipeline(subject_id, *args, **kwds) for subject_id in range(3)]
-    hades.utils.dump_data(f"{save_dir}/leaderboard_{pipeline.name}_preds.mat", *result)
+def run_pipeline(
+    pipeline, data_dir, save_dir, dev_split=None, filter_data=None, *args, **kwds
+):
+    result = []
+    for subject_id in trange(3, desc=" Subjects ", position=0):
+        train_data_full, train_label_full, test_data = hades.utils.load_data(
+            data_dir, subject_id
+        )
+        if filter_data is not None:
+            train_data_full = preprocessors.filter_data(
+                train_data_full, pass_band=filter_data, fs=1000
+            )
+            test_data = preprocessors.filter_data(
+                test_data, pass_band=filter_data, fs=1000
+            )
+        train_data, train_label, dev_data, dev_label = hades.utils.split_data(
+            train_data_full, train_label_full, dev_split
+        )
+        result.append(pipeline(train_data, train_label, test_data, *args, **kwds))
+
+    hades.utils.dump_data(
+        f"{save_dir}/leaderboard_{pipeline.name}{'' if not filter_data else '_filt' + str(filter_data)}_preds.mat",
+        *result,
+    )
     return result

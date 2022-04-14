@@ -1,3 +1,4 @@
+from typing import Tuple
 import numpy as np
 from scipy.io import loadmat, savemat
 
@@ -41,3 +42,15 @@ def dump_data(path, *dg):
 def get_time_slice(start, duartion, fs):
     time_slice = np.arange(0, int(duartion * fs)) + int(start * fs)
     return time_slice
+
+
+def split_data(
+    data: np.ndarray, label: np.ndarray, split: int = None
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    if split is None:
+        return data, label, data, label
+    train_data = data[:split]
+    train_label = label[:split]
+    dev_data = data[split:]
+    dev_label = label[split:]
+    return train_data, train_label, dev_data, dev_label

@@ -8,15 +8,15 @@ from hades.pipeline import Pipeline
 class SillyPipeline(Pipeline):
     NAME = "silly_pipeline"
 
-    def __init__(self, data_dir, fs):
-        super().__init__(self.NAME, data_dir)
+    def __init__(self, fs):
+        super().__init__(self.NAME)
         self.fs = fs
 
-    def fit(self, X: np.ndarray, Y: np.ndarray):
+    def _fit(self, X: np.ndarray, Y: np.ndarray):
         self.Y = Y
         return self
 
-    def predict(self, X: np.ndarray) -> np.ndarray:
+    def _predict(self, X: np.ndarray) -> np.ndarray:
         time_slice = hades.utils.get_time_slice(1, len(X) / self.fs, fs=self.fs)
         pred = self.Y[time_slice]
         return pred
