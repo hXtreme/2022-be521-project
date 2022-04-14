@@ -4,7 +4,7 @@ import numpy as np
 from tqdm import tqdm, trange
 
 import hades
-from hades import preprocessors
+from hades import preprocessors, postprocessors
 
 
 class Pipeline:
@@ -52,7 +52,14 @@ class Pipeline:
 
 
 def run_pipeline(
-    pipeline, data_dir, save_dir, dev_split=None, filter_data=None, *args, **kwds
+    pipeline,
+    data_dir,
+    save_dir,
+    dev_split=None,
+    filter_data=None,
+    pred_clipping=False,
+    *args,
+    **kwds,
 ):
     result = []
     for subject_id in trange(3, desc=" Subjects ", position=0):
@@ -69,10 +76,15 @@ def run_pipeline(
         train_data, train_label, dev_data, dev_label = hades.utils.split_data(
             train_data_full, train_label_full, dev_split
         )
-        result.append(pipeline(train_data, train_label, test_data, *args, **kwds))
+        preds = pipeline(train_data, train_label, test_data, *args, **kwds)
+        if pred_clipping:
+            pred_clips = preprocessors.get_label_clips(train_label)
+            preds = postprocessors.clip_predictions(preds, pred_clips)
+
+        result.append(preds)
 
     hades.utils.dump_data(
-        f"{save_dir}/leaderboard_{pipeline.name}{'' if not filter_data else '_filt' + str(filter_data)}_preds.mat",
+        f"{save_dir}/leaderboard_{pipeline.name}{'' if not filter_data else '_filt' + str(filter_data)}{'' if not pred_clipping else '_clip'}_preds.mat",
         *result,
     )
     return result
