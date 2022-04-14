@@ -101,7 +101,7 @@ class Lookup(Pipeline):
 class DownsampledLinear(Pipeline):
     NAME = "downsampled_linear_pipeline"
 
-    def __init__(self, fs, downsample_factor: int = 40):
+    def __init__(self, fs, downsample_factor: int = 20):
         super().__init__(self.NAME)
         self.fs = fs
         self.dsf = downsample_factor
