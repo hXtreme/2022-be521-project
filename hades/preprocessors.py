@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List
 
 import numpy as np
 
@@ -15,7 +15,7 @@ def normalize(
     return normalized_data, mean, std
 
 
-def filter_data(data, pass_band=(0.1, 200), fs=1000):
+def filter_data(data, pass_band=(0.1, 100), fs=1000):
     """
     Write a filter function to clean underlying data.
     Filter type and parameters are up to you. Points will be awarded for reasonable filter type, parameters and application.
@@ -36,3 +36,47 @@ def filter_data(data, pass_band=(0.1, 200), fs=1000):
 
     assert clean_data.shape == data.shape
     return clean_data
+
+
+def exclude_channels(data: np.ndarray, exclude_channels: List) -> np.ndarray:
+    """
+    Exclude the given channels from the data.
+    """
+    all_channel_indices = np.arange(data.shape[1])
+    keep_channel_indices = np.setdiff1d(all_channel_indices, exclude_channels)
+    return data[:, keep_channel_indices]
+
+
+def create_evolution_matrix(features: np.ndarray, history: int) -> np.ndarray:
+    """
+    Create the evolution matrix.
+
+    :param features: The features to create the evolution matrix for (windows, channels x features).
+    :param history: Number of windows of history to use.
+    :return: The evolution matrix (windows, history x channels x features).
+    """
+    num_windows, num_channels = np.shape(features)
+    padded_features = np.vstack((features[: history - 1], features))
+
+    R = np.empty((num_windows, (num_channels * history) + 1))
+    R[:, 0] = np.ones((num_windows))
+    for i in range(len(padded_features) - 2):
+        R[i, 1:] = np.concatenate(
+            (
+                padded_features[i, :],
+                padded_features[i + 1, :],
+                padded_features[i + 2, :],
+            ),
+            axis=None,
+        )
+    return R
+
+
+def get_label_clips(labels: np.ndarray) -> List:
+    """
+    Get the clips for the labels.
+    """
+    clips = []
+    for f_label in labels.T:
+        clips.append(f_label[f_label < 0].mean())
+    return clips
