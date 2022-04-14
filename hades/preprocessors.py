@@ -60,15 +60,11 @@ def create_evolution_matrix(features: np.ndarray, history: int) -> np.ndarray:
 
     R = np.empty((num_windows, (num_channels * history) + 1))
     R[:, 0] = np.ones((num_windows))
-    for i in range(len(padded_features) - 2):
-        R[i, 1:] = np.concatenate(
-            (
-                padded_features[i, :],
-                padded_features[i + 1, :],
-                padded_features[i + 2, :],
-            ),
-            axis=None,
+    for i in range(len(padded_features) - (history - 1)):
+        _R = np.concatenate(
+            [padded_features[i + j, :] for j in range(history)], axis=None,
         )
+        R[i, 1:] = _R
     return R
 
 

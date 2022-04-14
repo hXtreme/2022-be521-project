@@ -22,6 +22,7 @@ class WindowedFeaturePipeline(Pipeline):
         self.window_displacement = window_displacement
         self.history = history
         self.feature_fs = 1 / self.window_displacement
+        self.magic = int((window_length / window_displacement) - 1)
         assert self.feature_fs == int(
             self.feature_fs
         ), "Feature frequency must be an integer"
@@ -70,10 +71,10 @@ class WindowedFeaturePipeline(Pipeline):
         return features_evolution_matrix
 
     def pre_process_Y(self, Y: np.ndarray, *args, **kwds):
-        return utils.resample_data(Y.T, fs_old=self.fs, fs_new=self.feature_fs).T
+        return utils.resample_data(Y.T, fs_old=self.fs, fs_new=self.feature_fs, magic=self.magic).T
 
     def post_process_Y(self, X: np.ndarray, Y: np.ndarray, *args, **kwds):
-        last_Y = Y[-1]
+        last_Y = Y[-self.magic:]
         Y = np.vstack((Y, last_Y))
         return utils.resample_data(Y.T, fs_old=self.feature_fs, fs_new=self.fs).T
 
