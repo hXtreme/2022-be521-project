@@ -18,3 +18,8 @@ def jagged(y, r):
     y1 = y[::r, :]
     res = np.tile(y1, (1, r)).reshape(y.shape)
     return res
+
+
+def translate(x: np.ndarray, n: int) -> np.ndarray:
+    x2 = np.vstack((x[n:], x[-n:]))
+    return x2
