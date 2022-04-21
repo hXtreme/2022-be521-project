@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import pickle
 import numpy as np
 
 from tqdm import tqdm, trange
@@ -58,9 +59,19 @@ def run_pipeline(
     dev_split=None,
     filter_data=None,
     pred_clipping=False,
+    preds_jagged=False,
+    translate_labels=0,
+    dump_model=False,
     *args,
     **kwds,
 ):
+    dump_name = (
+        f"leaderboard_{pipeline.name}"
+        + (f"_filt{str(filter_data)}" if filter_data else "")
+        + (f"_jagg" if preds_jagged else "")
+        + (f"_clip" if pred_clipping else "")
+        + (f"_tr{translate_labels}" if translate_labels > 0 else "")
+    )
     result = []
     for subject_id in trange(3, desc=" Subjects ", position=0):
         train_data_full, train_label_full, test_data = hades.utils.load_data(
@@ -77,14 +88,19 @@ def run_pipeline(
             train_data_full, train_label_full, dev_split
         )
         preds = pipeline(train_data, train_label, test_data, *args, **kwds)
+
+        if dump_model:
+            with open(f"models/{dump_name}_sub{subject_id}.pkl", "wb") as f:
+                pickle.dump(pipeline, f)
         if pred_clipping:
             pred_clips = preprocessors.get_label_clips(train_label)
             preds = postprocessors.clip_predictions(preds, pred_clips)
+        if translate_labels > 0:
+            preds = postprocessors.translate(preds, translate_labels)
+        if preds_jagged:
+            preds = postprocessors.jagged(preds, r=20)
 
         result.append(preds)
 
-    hades.utils.dump_data(
-        f"{save_dir}/leaderboard_{pipeline.name}{'' if not filter_data else '_filt' + str(filter_data)}{'' if not pred_clipping else '_clip'}_preds.mat",
-        *result,
-    )
+    hades.utils.dump_data(f"{save_dir}/{dump_name}_preds.mat", *result)
     return result

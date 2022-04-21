@@ -12,3 +12,14 @@ def clip_predictions(preds: np.ndarray, pred_clips: List) -> np.ndarray:
     clipped_preds = np.array(clipped_preds).T
     assert clipped_preds.shape == preds.shape
     return clipped_preds
+
+
+def jagged(y, r):
+    y1 = y[::r, :]
+    res = np.tile(y1, (1, r)).reshape(y.shape)
+    return res
+
+
+def translate(x: np.ndarray, n: int) -> np.ndarray:
+    x2 = np.vstack((x[n:], x[-n:]))
+    return x2

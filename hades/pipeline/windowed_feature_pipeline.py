@@ -1,10 +1,12 @@
 from abc import abstractmethod
-from venv import create
+
+import pickle
 import numpy as np
 
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
+from sklearn.neural_network import MLPRegressor
 
 from tqdm import tqdm, trange
 
@@ -22,6 +24,8 @@ class WindowedFeaturePipeline(Pipeline):
         self.window_displacement = window_displacement
         self.history = history
         self.feature_fs = 1 / self.window_displacement
+        self.magic = int((window_length / window_displacement) - 1)
+        self.sid = None
         assert self.feature_fs == int(
             self.feature_fs
         ), "Feature frequency must be an integer"
@@ -54,6 +58,9 @@ class WindowedFeaturePipeline(Pipeline):
         features = self.get_windowed_feats(
             X, fs=self.fs, win_len=self.window_length, win_disp=self.window_displacement
         )
+        self.sid = 0 if self.sid is None else (self.sid + 1)
+        with open(f"/tmp/features-{self.sid}.pkl", "wb") as f:
+            pickle.dump(features, f)
         features_evolution_matrix = preprocessors.create_evolution_matrix(
             features, history=self.history
         )
@@ -64,16 +71,19 @@ class WindowedFeaturePipeline(Pipeline):
         features = self.get_windowed_feats(
             X, fs=self.fs, win_len=self.window_length, win_disp=self.window_displacement
         )
+
         features_evolution_matrix = preprocessors.create_evolution_matrix(
             features, history=self.history
         )
         return features_evolution_matrix
 
     def pre_process_Y(self, Y: np.ndarray, *args, **kwds):
-        return utils.resample_data(Y.T, fs_old=self.fs, fs_new=self.feature_fs).T
+        return utils.resample_data(
+            Y.T, fs_old=self.fs, fs_new=self.feature_fs, magic=self.magic
+        ).T
 
     def post_process_Y(self, X: np.ndarray, Y: np.ndarray, *args, **kwds):
-        last_Y = Y[-1]
+        last_Y = Y[-self.magic :]
         Y = np.vstack((Y, last_Y))
         return utils.resample_data(Y.T, fs_old=self.feature_fs, fs_new=self.fs).T
 
@@ -101,6 +111,87 @@ class Part1(WindowedFeaturePipeline):
 
     def _fit(self, X: np.ndarray, Y: np.ndarray):
         self.model = make_pipeline(StandardScaler(), LinearRegression()).fit(X, Y)
+        return self
+
+    def _predict(self, X: np.ndarray) -> np.ndarray:
+        return self.model.predict(X)
+
+
+class Part1MLP(WindowedFeaturePipeline):
+    NAME = "part1_mlp_pipeline"
+
+    def __init__(
+        self,
+        fs,
+        window_length=100e-3,
+        window_displacement=50e-3,
+        history=3,
+        layers=(100,),
+    ):
+        super().__init__(
+            f"{self.NAME}_wl{window_length}_wd{window_displacement}_h{history}_l{layers}",
+            fs,
+            window_length,
+            window_displacement,
+            history,
+        )
+        self.layers = layers
+
+    @property
+    def features(self):
+        return [
+            available_features.fn_line_length,
+            available_features.fn_area,
+            available_features.fn_energy,
+            available_features.fn_signed_area,
+        ]
+
+    def _fit(self, X: np.ndarray, Y: np.ndarray):
+        self.model = make_pipeline(
+            StandardScaler(), MLPRegressor(hidden_layer_sizes=self.layers)
+        ).fit(X, Y)
+        return self
+
+    def _predict(self, X: np.ndarray) -> np.ndarray:
+        return self.model.predict(X)
+
+
+class MLP2(WindowedFeaturePipeline):
+    NAME = "mlp2_pipeline"
+
+    def __init__(
+        self,
+        fs,
+        window_length=100e-3,
+        window_displacement=50e-3,
+        history=3,
+        layers=(100,),
+    ):
+        super().__init__(
+            f"{self.NAME}_wl{window_length}_wd{window_displacement}_h{history}_l{layers}",
+            fs,
+            window_length,
+            window_displacement,
+            history,
+        )
+        self.name += f"_fts{len(self.features)}"
+        self.layers = layers
+
+    @property
+    def features(self):
+        return [
+            available_features.fn_line_length,
+            available_features.fn_area,
+            available_features.fn_energy,
+            available_features.fn_signed_area,
+            available_features.fn_deviation,
+            # available_features.fn_max_min_diff,
+        ]
+
+    def _fit(self, X: np.ndarray, Y: np.ndarray):
+        self.model = make_pipeline(
+            StandardScaler(), MLPRegressor(hidden_layer_sizes=self.layers)
+        ).fit(X, Y)
         return self
 
     def _predict(self, X: np.ndarray) -> np.ndarray:

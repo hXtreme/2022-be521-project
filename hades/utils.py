@@ -42,7 +42,7 @@ def dump_data(path, *dg):
 
 
 def resample_data(
-    data: np.ndarray, fs_old: float, fs_new: float, adjust=False
+    data: np.ndarray, fs_old: float, fs_new: float, kind="cubic", magic=1
 ) -> np.ndarray:
     """
     Resamples the data to the new sampling rate.
@@ -57,11 +57,11 @@ def resample_data(
     duration = samples / fs_old
     time_old = np.linspace(0, duration, samples)
 
-    interp_fn = interpolate.interp1d(time_old, data, kind="cubic")
+    interp_fn = interpolate.interp1d(time_old, data, kind=kind)
     if fs_new < fs_old:
         samples_new = int((samples * fs_new) / fs_old)
         time_new = np.linspace(0, duration, samples_new)
-        resampled_data = interp_fn(time_new[:-1])
+        resampled_data = interp_fn(time_new[:-magic])
     else:
         samples_new = int((samples * fs_new) / fs_old)
         time_new = np.linspace(0, duration, samples_new)
