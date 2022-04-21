@@ -7,6 +7,7 @@ import pytorch_lightning.loggers as pl_loggers
 import pytorch_lightning.callbacks as pl_callbacks
 from vivit import *
 from utils import *
+import pickle
 
 import hades
 
@@ -23,7 +24,7 @@ data_dir  = "../../data"
 
 subject_ID = 0
 
-pretrained_path   = "lightning_logs/version_17/checkpoints/epoch=29-step=239.ckpt"
+pretrained_path   = ""
 
 dataset_size      = 40   # Number of videos in each mini-batch
 batch_number      = 0    # Mini-batch number to use 
@@ -31,11 +32,8 @@ batch_number      = 0    # Mini-batch number to use
 train_batch_size  = 4
 test_batch_size   = int(dataset_size * 0.2)
 
-include_audio    = False  
 
 use_pretrained   = False   
-
-
 
 # Model Hyperparameters
 image_size  = 240
@@ -56,11 +54,11 @@ class ViViTDataModule(pl.LightningDataModule):
     def __init__(self, include_audio=False):
     # Define required parameters here
         super().__init__()
-        #self.videos, self.labels = getDataset(video_path, label_path, dataset_size)
-        self.videos, self.labels, _ = hades.utils.load_data(data_dir, subject_ID)
 
-        self.include_audio = include_audio
+        with open('../../data/features-1.pkl','rb') as f: 
+          data = pickle.load(f)
 
+        self.videos, self.labels = 0, 0
 
         self.transform = transforms.Compose([
           transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))
@@ -69,19 +67,12 @@ class ViViTDataModule(pl.LightningDataModule):
     def prepare_data(self):
     # Define steps that should be done on only one GPU, like getting data.   
       self.videos = torch.FloatTensor(self.videos)
-      print(self.videos.shape)
-      self.videos = self.videos.permute(0, 1, 4, 2, 3)
+      #self.videos = self.videos.permute(0, 1, 4, 2, 3)
       self.videos = self.transform(self.videos)
       self.labels = torch.Tensor(self.labels).long()
-
-      if self.include_audio:
-        self.audio = torch.FloatTensor(self.audio)
-        self.full_dataset = TensorDataset(self.videos, self.audio, self.labels)
-        del self.videos, self.labels, self.audio
       
-      else:
-        self.full_dataset = TensorDataset(self.videos, self.labels)
-        del self.videos, self.labels
+      self.full_dataset = TensorDataset(self.videos, self.labels)
+      del self.videos, self.labels
 
       self.length = len(self.full_dataset)
 
