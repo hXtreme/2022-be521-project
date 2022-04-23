@@ -104,3 +104,9 @@ def run_pipeline(
 
     hades.utils.dump_data(f"{save_dir}/{dump_name}_preds.mat", *result)
     return result
+
+
+def load_pipeline(pipeline_file: str) -> Pipeline:
+    with open(pipeline_file, "rb") as f:
+        pipeline = pickle.load(f)
+    return pipeline
