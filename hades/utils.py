@@ -23,6 +23,18 @@ def load_data(data_dir, subject_id):
         test_data["leaderboard_ecog"][subject_id, 0],
     )
 
+def load_test_data(data_file: str, subject_id):
+    """
+    Loads the tesing data from specified file.
+
+    :param data_file: The file containing testing data.
+    :param subject_id: The subject id of the data to load (0, 1, 2)..
+    :return: training data
+    """
+
+    test_data = loadmat(data_file)
+    return test_data["truetest_data"][subject_id, 0]
+
 
 def dump_data(path, *dg):
     """
