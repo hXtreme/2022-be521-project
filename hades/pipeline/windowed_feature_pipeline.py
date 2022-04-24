@@ -196,3 +196,51 @@ class MLP2(WindowedFeaturePipeline):
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         return self.model.predict(X)
+
+class MLP2_Fingers(WindowedFeaturePipeline):
+    NAME = "mlp2_fingers_pipeline"
+
+    def __init__(
+        self,
+        fs,
+        window_length=100e-3,
+        window_displacement=50e-3,
+        history=3,
+        layers=(100,),
+    ):
+        super().__init__(
+            f"{self.NAME}_wl{window_length}_wd{window_displacement}_h{history}_l{layers}",
+            fs,
+            window_length,
+            window_displacement,
+            history,
+        )
+        self.name += f"_fts{len(self.features)}"
+        self.layers = layers
+
+    @property
+    def features(self):
+        return [
+            available_features.fn_line_length,
+            available_features.fn_area,
+            available_features.fn_energy,
+            available_features.fn_signed_area,
+            available_features.fn_deviation,
+            # available_features.fn_max_min_diff,
+        ]
+
+    def _fit(self, X: np.ndarray, Y: np.ndarray):
+        self.models = []
+
+        for _Y in Y.T:
+            model = make_pipeline(
+                StandardScaler(), MLPRegressor(hidden_layer_sizes=self.layers)
+            ).fit(X, _Y)
+            self.models.append(model)
+        return self
+
+    def _predict(self, X: np.ndarray) -> np.ndarray:
+        Y = np.zeros((len(X), len(self.models)))
+        for i, model in enumerate(self.models):
+            Y[:, i] = model.predict(X)
+        return Y
