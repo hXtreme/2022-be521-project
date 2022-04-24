@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from pathlib import Path
 import pickle
 import numpy as np
 
@@ -61,7 +62,7 @@ def run_pipeline(
     pred_clipping=False,
     preds_jagged=False,
     translate_labels=0,
-    dump_model=False,
+    dump_model=True,
     *args,
     **kwds,
 ):
@@ -89,8 +90,10 @@ def run_pipeline(
         )
         preds = pipeline(train_data, train_label, test_data, *args, **kwds)
 
-        if dump_model:
-            with open(f"models/{dump_name}_sub{subject_id}.pkl", "wb") as f:
+        if dump_model or True:
+            model_dir = Path(f"./models/{dump_name}")
+            model_dir.mkdir(parents=True, exist_ok=True)
+            with open(f"{model_dir}/model-sub{subject_id}.pkl", "wb") as f:
                 pickle.dump(pipeline, f)
         if pred_clipping:
             pred_clips = preprocessors.get_label_clips(train_label)
