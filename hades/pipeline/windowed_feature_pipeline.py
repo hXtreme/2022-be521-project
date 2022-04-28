@@ -6,6 +6,7 @@ import numpy as np
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LinearRegression
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neural_network import MLPRegressor
 
 from tqdm import tqdm, trange
@@ -117,6 +118,41 @@ class Part1(WindowedFeaturePipeline):
         return self.model.predict(X)
 
 
+class WindowedKNN(WindowedFeaturePipeline):
+    NAME = "windowed_knn_pipeline"
+
+    def __init__(
+        self, fs, window_length=100e-3, window_displacement=50e-3, history=3, k=3
+    ):
+        name = f"{self.NAME}_{k}-NN"
+        super().__init__(
+            f"{name}_wl{window_length}_wd{window_displacement}_h{history}",
+            fs,
+            window_length,
+            window_displacement,
+            history,
+        )
+        self.k = k
+
+    @property
+    def features(self):
+        return [
+            available_features.fn_line_length,
+            available_features.fn_area,
+            available_features.fn_energy,
+            available_features.fn_signed_area,
+        ]
+
+    def _fit(self, X: np.ndarray, Y: np.ndarray):
+        self.model = make_pipeline(
+            StandardScaler(), KNeighborsRegressor(n_neighbors=self.k)
+        ).fit(X, Y)
+        return self
+
+    def _predict(self, X: np.ndarray) -> np.ndarray:
+        return self.model.predict(X)
+
+
 class Part1MLP(WindowedFeaturePipeline):
     NAME = "part1_mlp_pipeline"
 
@@ -196,6 +232,7 @@ class MLP2(WindowedFeaturePipeline):
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         return self.model.predict(X)
+
 
 class MLP2_Fingers(WindowedFeaturePipeline):
     NAME = "mlp2_fingers_pipeline"
