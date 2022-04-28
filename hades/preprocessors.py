@@ -38,6 +38,20 @@ def filter_data(data, pass_band=(0.1, 100), fs=1000):
     return clean_data
 
 
+def remove_powerline_noise(data: np.ndarray, fs: float) -> np.ndarray:
+    """
+    Remove powerline noise from the data.
+    """
+    b, a = sig.iirnotch(60, Q=30, fs=fs)
+
+    if len(data.shape) > 1:
+        clean_data = np.array([sig.filtfilt(b, a, eeg) for eeg in data.T]).T
+    else:
+        clean_data = sig.filtfilt(b, a, data)
+    assert clean_data.shape == data.shape
+    return clean_data
+
+
 def exclude_channels(data: np.ndarray, exclude_channels: List) -> np.ndarray:
     """
     Exclude the given channels from the data.
