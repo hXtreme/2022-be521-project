@@ -5,6 +5,11 @@ from scipy.io import loadmat, savemat
 from scipy import interpolate
 
 
+def load_data_from_file(data_file: str, subject_id: int, key: str) -> np.ndarray:
+    data = loadmat(data_file)
+    return data[key][subject_id, 0]
+
+
 def load_data(data_dir, subject_id):
     """
     Loads the training and testing data from the given dir.
@@ -13,15 +18,14 @@ def load_data(data_dir, subject_id):
     :param subject_id: The subject id of the data to load (0, 1, 2).
     :return: A tuple of (training_data, training_labels, testing_data).
     """
-    train_path = data_dir + "/raw_training_data.mat"
-    test_path = data_dir + "/leaderboard_data.mat"
-    train_data = loadmat(train_path)
-    test_data = loadmat(test_path)
+    train_file = data_dir + "/raw_training_data.mat"
+    test_file = data_dir + "/leaderboard_data.mat"
     return (
-        train_data["train_ecog"][subject_id, 0],
-        train_data["train_dg"][subject_id, 0],
-        test_data["leaderboard_ecog"][subject_id, 0],
+        load_data_from_file(train_file, subject_id, "train_ecog"),
+        load_data_from_file(train_file, subject_id, "train_dg"),
+        load_data_from_file(test_file, subject_id, "leaderboard_ecog"),
     )
+
 
 def load_test_data(data_file: str, subject_id):
     """
@@ -31,9 +35,7 @@ def load_test_data(data_file: str, subject_id):
     :param subject_id: The subject id of the data to load (0, 1, 2)..
     :return: training data
     """
-
-    test_data = loadmat(data_file)
-    return test_data["truetest_data"][subject_id, 0]
+    return load_data_from_file(data_file, subject_id, "truetest_data")
 
 
 def dump_data(path, *dg):
