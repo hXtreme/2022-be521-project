@@ -15,7 +15,7 @@ def normalize(
     return normalized_data, mean, std
 
 
-def filter_data(data, pass_band=(0.1, 100), fs=1000):
+def filter_data(data, pass_band=(0.1, 100), fs=1000, order=10):
     """
     Write a filter function to clean underlying data.
     Filter type and parameters are up to you. Points will be awarded for reasonable filter type, parameters and application.
@@ -28,7 +28,7 @@ def filter_data(data, pass_band=(0.1, 100), fs=1000):
     Output:
       clean_data (samples x channels): the filtered signal
     """
-    sos = sig.butter(10, Wn=pass_band, btype="bandpass", fs=fs, output="sos")
+    sos = sig.butter(order, Wn=pass_band, btype="bandpass", fs=fs, output="sos")
     if len(data.shape) > 1:
         clean_data = np.array([sig.sosfiltfilt(sos, eeg) for eeg in data.T]).T
     else:
