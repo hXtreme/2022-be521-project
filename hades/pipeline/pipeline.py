@@ -3,6 +3,7 @@ from pathlib import Path
 import pickle
 import numpy as np
 
+from sklearn.metrics import mean_squared_error
 from tqdm import tqdm, trange
 
 import hades
@@ -89,6 +90,9 @@ def run_pipeline(
             train_data_full, train_label_full, dev_split
         )
         preds = pipeline(train_data, train_label, test_data, *args, **kwds)
+
+        train_loss = mean_squared_error(train_label, pipeline.predict(train_data))
+        print(f"Train loss subj{subject_id}: {train_loss}")
 
         if dump_model or True:
             model_dir = Path(f"./models/{dump_name}")
