@@ -4,7 +4,7 @@ This project has been implemented by the group HADES as a requirement for the Fi
 
 ## Dataset
 
-The dataset used for the project is from the 4th International Brain Computer Interfaces Competition, the details of which can be found [here](https://www.bbci.de/competition/iv/).
+The dataset used for the project is from the _4th International Brain Computer Interfaces Competition_, the details of which can be found [here](https://www.bbci.de/competition/iv/).
 
 ---
 
