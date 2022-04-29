@@ -91,8 +91,8 @@ def run_pipeline(
         )
         preds = pipeline(train_data, train_label, test_data, *args, **kwds)
 
-        train_loss = mean_squared_error(train_label, pipeline.predict(train_data))
-        print(f"Train loss subj{subject_id}: {train_loss}")
+        dev_loss = mean_squared_error(dev_label, pipeline.predict(dev_data))
+        print(f"Dev loss subj{subject_id}: {dev_loss}")
 
         if dump_model or True:
             model_dir = Path(f"./models/{dump_name}")
