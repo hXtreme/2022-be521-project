@@ -84,7 +84,7 @@ print("Shape of model output :", output.shape)      # [B, num_classes]
 
 ## Pipeline
 
-![](assets/framework.png)
+![](assets/framework.jpg)
 
 ## Citation:
 ```
