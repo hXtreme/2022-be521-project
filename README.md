@@ -13,6 +13,8 @@ The dataset used for the project is from the _4th International Brain Computer I
 
 ## Installation
 
+To install the hades library follow the instructions given below:
+
 ```
 git clone https://github.com/hXtreme/2022-be521-project.git
 cd 2022-be521-project
@@ -70,7 +72,7 @@ hades.pipeline.run_pipeline(my_pipeline, "./data", "./preds", dump_model=True);
 ```
 
 A model corresponding to the pipeline will be trained, and predictions will be stored as a `mat` file
-with an appropritate name under `./preds`.
+with an appropriate name under `./preds`.
 Since, in this example we also pass `dump_model=True`, after training the
 pipeline will be pickled and stored in `./models` under a folder with an appropriate name
 for each of the three subjects.
@@ -90,8 +92,8 @@ Please cite us if you use our work in any meaningful capacity.
 }
 ```
 
-## Acknowledgement:
+## Acknowledgments:
 
 - This work wouldn't have been possible without our Prof. Litt's expert guidance and insightful lectures.
 - Heartfelt thanks to our TAs for setting up an interesting final project.
-- Thanks to Daniel for pushing up to work harder by catering food :wink:
+- Thanks to Daniel for pushing us to work harder by catering food :wink:
