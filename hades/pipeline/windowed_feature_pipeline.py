@@ -59,9 +59,7 @@ class WindowedFeaturePipeline(Pipeline):
         features = self.get_windowed_feats(
             X, fs=self.fs, win_len=self.window_length, win_disp=self.window_displacement
         )
-        self.sid = 0 if self.sid is None else (self.sid + 1)
-        with open(f"/tmp/features-{self.sid}.pkl", "wb") as f:
-            pickle.dump(features, f)
+        features = self.features_hook(features)
         features_evolution_matrix = preprocessors.create_evolution_matrix(
             features, history=self.history
         )
@@ -72,7 +70,7 @@ class WindowedFeaturePipeline(Pipeline):
         features = self.get_windowed_feats(
             X, fs=self.fs, win_len=self.window_length, win_disp=self.window_displacement
         )
-
+        features = self.features_hook_eval(features)
         features_evolution_matrix = preprocessors.create_evolution_matrix(
             features, history=self.history
         )
@@ -87,6 +85,22 @@ class WindowedFeaturePipeline(Pipeline):
         last_Y = Y[-self.magic :]
         Y = np.vstack((Y, last_Y))
         return utils.resample_data(Y.T, fs_old=self.feature_fs, fs_new=self.fs).T
+
+    def features_hook(self, features):
+        """
+        Hook to modify features before they are used in the pipeline
+
+        :param features: features (windows, channels x features)
+        """
+        return features
+
+    def features_hook_eval(self, features):
+        """
+        Hook to modify features before they are used in the pipeline
+
+        :param features: features (windows, channels x features)
+        """
+        return features
 
 
 class Part1(WindowedFeaturePipeline):
