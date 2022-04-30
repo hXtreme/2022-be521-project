@@ -15,9 +15,9 @@ The dataset used for the project is from the _4th International Brain Computer I
 
 To install the hades library follow the instructions given below:
 
-```
-git clone https://github.com/hXtreme/2022-be521-project.git
-cd 2022-be521-project
+```sh
+git clone https://github.com/hXtreme/2022-be521-project.git hades
+cd hades
 pip install -e .
 ```
 
